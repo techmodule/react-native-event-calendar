@@ -9,7 +9,6 @@ import {
 import _ from 'lodash';
 import moment from 'moment';
 import React from 'react';
-
 import styleConstructor from './style';
 
 import DayView from './DayView';
@@ -17,10 +16,9 @@ import DayView from './DayView';
 export default class EventCalendar extends React.Component {
   constructor(props) {
     super(props);
-
     const start = props.start ? props.start : 0;
     const end = props.end ? props.end : 24;
-
+    this.theme = props.theme;
     this.styles = styleConstructor(props.styles, (end - start) * 100);
     this.state = {
       date: moment(this.props.initDate),
@@ -116,6 +114,10 @@ export default class EventCalendar extends React.Component {
           date={date}
           index={index}
           format24h={format24h}
+          isLoading = {this.props.isLoading}
+          bottomMenuBottom = {this.props.bottomMenuBottom}
+          bottomMenuHeight = {this.props.bottomMenuHeight}
+          renderBottomMenu={this.props.renderBottomMenu}
           formatHeader={this.props.formatHeader}
           headerStyle={this.props.headerStyle}
           renderEvent={this.props.renderEvent}
@@ -127,6 +129,7 @@ export default class EventCalendar extends React.Component {
           start={start}
           end={end}
         />
+
       </View>
     );
   }
@@ -180,6 +183,7 @@ export default class EventCalendar extends React.Component {
       virtualizedListProps,
       events,
       initDate,
+        theme,
     } = this.props;
 
     return (
@@ -197,7 +201,7 @@ export default class EventCalendar extends React.Component {
           horizontal
           pagingEnabled
           renderItem={this._renderItem.bind(this)}
-          style={{ width: width }}
+          style={{ width: width}}
           onMomentumScrollEnd={event => {
             const index = parseInt(event.nativeEvent.contentOffset.x / width);
             const date = moment(this.props.initDate).add(
