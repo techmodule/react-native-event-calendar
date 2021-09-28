@@ -34,6 +34,7 @@ export default class DayView extends React.PureComponent {
         if (sizeTopEvents > props.allDayEvents.length) {
             topHeight = heightTopEvents * props.allDayEvents.length;
         }
+
         this.state = {
             _scrollY: initPosition,
             packedEvents,
@@ -41,7 +42,7 @@ export default class DayView extends React.PureComponent {
             sizeTopEvents,
             showMoreTopEvents: false,
             topHeight,
-            fullTopHeight
+            fullTopHeight,
         };
     }
     componentWillReceiveProps(nextProps) {
@@ -208,7 +209,6 @@ export default class DayView extends React.PureComponent {
     _renderAllDayEvents() {
         const {styles} = this.props;
         let allTopEvents = this.props.allDayEvents;
-        let countTopEvents = this.props.allDayEvents.length;
         if (!this.state.showMoreTopEvents) {
             allTopEvents = allTopEvents.slice(0, this.state.sizeTopEvents);
         }
@@ -242,7 +242,7 @@ export default class DayView extends React.PureComponent {
                     ) : (
                         <View>
                             <Text numberOfLines={1} style={styles.eventTitle}>
-                                {event.title || 'Event'}
+                                {moment(event.start).format("DDTMM hh:mm")} {moment(event.end).format("DDTMM hh:mm")}{event.title || 'Event'}
                             </Text>
                         </View>
                     )}

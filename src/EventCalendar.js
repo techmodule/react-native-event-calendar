@@ -49,12 +49,13 @@ export default class EventCalendar extends React.Component {
             'days'
         );
         if (this.props.isShowTopEvent) {
+            let zeroOfDay = moment(date).startOf('day');
             let startOfDay = moment(date).startOf('day');
-            if (this.props.start !== 0) {
+            if (this.props.start) {
                 startOfDay = moment(startOfDay).add(this.props.start, 'hours');
             }
             let endOfDay = moment(date).endOf('day');
-            if (this.props.end !== 24) {
+            if (this.props.end) {
                 endOfDay = moment(startOfDay).add(this.props.end, 'hours');
             }
             //Alert.alert("endOfDay", moment(endOfDay).format("YYYY-MM-DD hh:mm:ss"));
@@ -70,7 +71,10 @@ export default class EventCalendar extends React.Component {
             for (const event of events) {
                 const eventStartTime = moment(event.start);
                 const eventEndTime = moment(event.end);
-                if (eventStartTime < startOfDay || eventEndTime > endOfDay) {
+                if (eventStartTime < startOfDay && eventEndTime > startOfDay) {
+                    allDayEvents.push(event);
+                }
+                if (eventStartTime > zeroOfDay && eventStartTime < endOfDay && eventEndTime > endOfDay) {
                     allDayEvents.push(event);
                 }
             }
