@@ -225,15 +225,11 @@ export default class DayView extends React.PureComponent {
                 backgroundColor: event.color,
             };
 
-            // Fixing the number of lines for the event title makes this calculation easier.
-            // However it would make sense to overflow the title to a new line if needed
-            const numberOfLines = Math.floor(event.height / TEXT_LINE_HEIGHT);
-            const formatTime = this.props.format24h ? 'HH:mm' : 'hh:mm A';
             return (
                 <TouchableOpacity
                     activeOpacity={0.5}
                     onPress={() =>
-                        this._onEventTapped(this.props.events[event.index])
+                        this._onEventTapped(event)
                     }
                     key={i} style={[styles.allDayEvent, style, event.color && eventColor]}
                 >
@@ -242,7 +238,7 @@ export default class DayView extends React.PureComponent {
                     ) : (
                         <View>
                             <Text numberOfLines={1} style={styles.eventTitle}>
-                                {moment(event.start).format("DDTMM hh:mm")} {moment(event.end).format("DDTMM hh:mm")}{event.title || 'Event'}
+                                {event.title || 'Event'}
                             </Text>
                         </View>
                     )}
