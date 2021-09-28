@@ -1,5 +1,5 @@
 // @flow
-import {ScrollView, Text, TouchableOpacity, View, ActivityIndicator} from 'react-native';
+import {ActivityIndicator, Image, ScrollView, Text, TouchableOpacity, View} from 'react-native';
 import populateEvents from './Packer';
 import React from 'react';
 import moment from 'moment';
@@ -22,17 +22,28 @@ export default class DayView extends React.PureComponent {
         super(props);
         this.calendarHeight = (props.end - props.start) * 100;
         const width = props.width - LEFT_MARGIN;
+        const sizeTopEvents = props.sizeTopEvents ? props.sizeTopEvents : 2;
+        const heightTopEvents = props.heightTopEvents ? props.heightTopEvents : 26;
         const packedEvents = populateEvents(props.events, width, props.start);
         let initPosition =
             _.min(_.map(packedEvents, 'top')) -
             this.calendarHeight / (props.end - props.start);
         initPosition = initPosition < 0 ? 0 : initPosition;
+        let topHeight = heightTopEvents * sizeTopEvents;
+        let fullTopHeight = heightTopEvents * props.allDayEvents.length;
+        if (sizeTopEvents > props.allDayEvents.length) {
+            topHeight = heightTopEvents * props.allDayEvents.length;
+        }
         this.state = {
             _scrollY: initPosition,
             packedEvents,
+            heightTopEvents,
+            sizeTopEvents,
+            showMoreTopEvents: false,
+            topHeight,
+            fullTopHeight
         };
     }
-
     componentWillReceiveProps(nextProps) {
         const width = nextProps.width - LEFT_MARGIN;
         this.setState({
@@ -81,7 +92,6 @@ export default class DayView extends React.PureComponent {
     _renderLines() {
         const {format24h, start, end} = this.props;
         const offset = this.calendarHeight / (end - start);
-
         return range(start, end + 1).map((i, index) => {
             let timeText;
             if (i === start) {
@@ -189,8 +199,94 @@ export default class DayView extends React.PureComponent {
         });
 
         return (
-            <View>
+            <View style={{flex: 1}}>
                 <View style={{marginLeft: LEFT_MARGIN}}>{events}</View>
+            </View>
+        );
+    }
+
+    _renderAllDayEvents() {
+        const {styles} = this.props;
+        let allTopEvents = this.props.allDayEvents;
+        let countTopEvents = this.props.allDayEvents.length;
+        if (!this.state.showMoreTopEvents) {
+            allTopEvents = allTopEvents.slice(0, this.state.sizeTopEvents);
+        }
+        let events = allTopEvents.map((event, i) => {
+            let style = {
+                width: this.props.width - 10,
+            };
+            if (this.props.allDayEvents.length > this.state.sizeTopEvents) {
+                style = {
+                    width: this.props.width - 50,
+                };
+            }
+            const eventColor = {
+                backgroundColor: event.color,
+            };
+
+            // Fixing the number of lines for the event title makes this calculation easier.
+            // However it would make sense to overflow the title to a new line if needed
+            const numberOfLines = Math.floor(event.height / TEXT_LINE_HEIGHT);
+            const formatTime = this.props.format24h ? 'HH:mm' : 'hh:mm A';
+            return (
+                <TouchableOpacity
+                    activeOpacity={0.5}
+                    onPress={() =>
+                        this._onEventTapped(this.props.events[event.index])
+                    }
+                    key={i} style={[styles.allDayEvent, style, event.color && eventColor]}
+                >
+                    {this.props.renderAllDayEvent ? (
+                        this.props.renderAllDayEvent(event)
+                    ) : (
+                        <View>
+                            <Text numberOfLines={1} style={styles.eventTitle}>
+                                {event.title || 'Event'}
+                            </Text>
+                        </View>
+                    )}
+                </TouchableOpacity>
+            );
+        });
+        const showMoreIcon = this.props.showMoreIcon ? (
+            this.props.showMoreIcon
+        ) : (
+            <Image source={require('./showmore.png')} style={styles.arrow}/>
+        );
+        const showLessIcon = this.props.showLessIcon ? (
+            this.props.showLessIcon
+        ) : (
+            <Image source={require('./showless.png')} style={styles.arrow}/>
+        );
+
+        return (
+            <View>
+                {this.props.allDayEvents.length > this.state.sizeTopEvents ? (
+                    <View style={{
+                        alignContent: "center",
+                        alignItems: "center",
+                        flexDirection: "row",
+                    }}><View>{events}</View>
+                        {this.state.showMoreTopEvents ? (<TouchableOpacity
+                            style={styles.arrowButton}
+                            onPress={() => this.setState({showMoreTopEvents: false})}
+                        >
+                            {showLessIcon}
+                        </TouchableOpacity>) : (
+                            <TouchableOpacity
+                                style={styles.arrowButton}
+                                onPress={() => this.setState({showMoreTopEvents: true})}
+                            >
+                                {showMoreIcon}
+                            </TouchableOpacity>
+                        )}
+
+                    </View>
+                ) : (<View style={{
+                    alignContent: "center",
+                    alignItems: "center",
+                }}>{events}</View>)}
             </View>
         );
     }
@@ -198,8 +294,16 @@ export default class DayView extends React.PureComponent {
     render() {
         const {styles} = this.props;
         return (
-            <View>
-                {this.props.isLoading&&<ActivityIndicator size="small" color="grey" />}
+            <View style={{flex: 1}}>
+                {this.props.isLoading && <ActivityIndicator size="small" color="grey"/>}
+                {this.props.allDayEvents.length > 0 &&
+                <View style={{
+                    height: this.state.showMoreTopEvents ? this.state.fullTopHeight : this.state.topHeight,
+                    marginTop: 2,
+                    padding: 2
+                }}>
+                    {this._renderAllDayEvents()}
+                </View>}
                 <ScrollView
                     ref={ref => (this._scrollView = ref)}
                     contentContainerStyle={[
@@ -212,16 +316,17 @@ export default class DayView extends React.PureComponent {
                     {this._renderRedLine()}
                 </ScrollView>
                 {this.props.renderBottomMenu && <View style={{
-                    bottom: this.props.bottomMenuBottom?this.props.bottomMenuBottom:120,
-                    height: this.props.bottomMenuHeight?this.props.bottomMenuHeight:200,
+                    bottom: this.props.bottomMenuBottom ? this.props.bottomMenuBottom : 120,
+                    height: this.props.bottomMenuHeight ? this.props.bottomMenuHeight : 200,
                     width: this.props.width,
                     backgroundColor: "#F5F5F6",
-                    alignContent:"center",
-                    alignItems:"center",
+                    alignContent: "center",
+                    alignItems: "center",
                     padding: 10,
                 }}>{this.props.renderBottomMenu}</View>}
 
             </View>
         );
     }
+
 }
