@@ -14,9 +14,15 @@ export default class EventCalendar extends React.Component {
         const end = props.end ? props.end : 24;
         this.theme = props.theme;
         this.styles = styleConstructor(props.styles, (end - start) * 100);
+        const sizeTopEvents = props.sizeTopEvents ? props.sizeTopEvents : 2;
+        const heightTopEvents = props.heightTopEvents ? props.heightTopEvents : 26;
         this.state = {
             date: moment(this.props.initDate),
             index: this.props.size,
+            showMoreTopEvents: false,
+            heightTopEvents,
+            sizeTopEvents,
+
         };
     }
 
@@ -41,6 +47,10 @@ export default class EventCalendar extends React.Component {
     _getItemLayout(data, index) {
         const {width} = this.props;
         return {length: width, offset: width * index, index};
+    }
+
+    _onEventTapped(event) {
+        this.props.eventTapped(event);
     }
 
     _getItem(events, index) {
@@ -92,6 +102,92 @@ export default class EventCalendar extends React.Component {
 
     }
 
+    _renderAllDayEvents(fullDayEvents) {
+        const styles = this.styles;
+        let allTopEvents = fullDayEvents;
+        if (!this.state.showMoreTopEvents) {
+            allTopEvents = allTopEvents.slice(0, this.props.sizeTopEvents);
+        }
+        let eventsView = allTopEvents.map((event, i) => {
+            let style = {
+                width: this.props.width - 10,
+            };
+            if (fullDayEvents.length > this.props.sizeTopEvents) {
+                style = {
+                    width: this.props.width - 50,
+                };
+            }
+            const eventColor = {
+                backgroundColor: event.color,
+            };
+
+            return (
+                <TouchableOpacity
+                    activeOpacity={0.5}
+                    onPress={() =>
+                        this._onEventTapped(event)
+                    }
+                    key={i} style={[styles.allDayEvent, style, event.color && eventColor]}
+                >
+                    {this.props.renderAllDayEvent ? (
+                        this.props.renderAllDayEvent(event)
+                    ) : (
+                        <View>
+                            <Text numberOfLines={1} style={styles.eventTitle}>
+                                {event.title}
+                            </Text>
+                        </View>
+                    )}
+                </TouchableOpacity>
+            );
+        });
+        const showMoreIcon = this.props.showMoreIcon ? (
+            this.props.showMoreIcon
+        ) : (
+            <Image source={require('./showmore.png')} style={styles.arrow}/>
+        );
+        const showLessIcon = this.props.showLessIcon ? (
+            this.props.showLessIcon
+        ) : (
+            <Image source={require('./showless.png')} style={styles.arrow}/>
+        );
+
+        return (
+            <View>
+                {fullDayEvents.length > this.props.sizeTopEvents ? (
+                    <View style={{
+                        alignContent: "center",
+                        alignItems: "center",
+                        flexDirection: "row",
+                    }}>
+                        <View>
+                            {eventsView}
+                        </View>
+                        {this.state.showMoreTopEvents ? (
+                            <TouchableOpacity
+                                style={styles.arrowButton}
+                                onPress={() => this.setState({showMoreTopEvents: false})}
+                            >
+                                {showLessIcon}
+                            </TouchableOpacity>
+                        ) : (
+                            <TouchableOpacity
+                                style={styles.arrowButton}
+                                onPress={() => this.setState({showMoreTopEvents: true})}
+                            >
+                                {showMoreIcon}
+                            </TouchableOpacity>
+                        )}
+
+                    </View>
+                ) : (<View style={{
+                    alignContent: "center",
+                    alignItems: "center",
+                }}>{eventsView}</View>)}
+            </View>
+        );
+    }
+
     _renderItem({index, item}) {
         const {
             width,
@@ -103,6 +199,12 @@ export default class EventCalendar extends React.Component {
             formatHeader,
             upperCaseHeader = false,
         } = this.props;
+        let allDayEvents = item[1];
+        let topHeight = this.state.heightTopEvents * this.props.sizeTopEvents + 10;
+        let fullTopHeight = this.state.heightTopEvents * allDayEvents.length + 10;
+        if (this.props.sizeTopEvents > allDayEvents.length) {
+            topHeight = this.state.heightTopEvents * allDayEvents.length + 10;
+        }
         const date = moment(initDate).add(index - this.props.size, 'days');
         const leftIcon = this.props.headerIconLeft ? (
             this.props.headerIconLeft
@@ -138,16 +240,19 @@ export default class EventCalendar extends React.Component {
                         {rightIcon}
                     </TouchableOpacity>
                 </View>
+                {item[1].length > 0 &&
+                <View style={{
+                    height: this.state.showMoreTopEvents ? fullTopHeight : topHeight,
+                    //height:300,
+                    marginTop: 2,
+                }}>
+                    {this._renderAllDayEvents(item[1])}
+                </View>}
                 <DayView
                     date={date}
                     index={index}
                     format24h={format24h}
                     isLoading={this.props.isLoading}
-                    sizeTopEvents={this.props.sizeTopEvents}
-                    heightTopEvents={this.props.heightTopEvents}
-                    bottomMenuBottom={this.props.bottomMenuBottom}
-                    bottomMenuHeight={this.props.bottomMenuHeight}
-                    renderBottomMenu={this.props.renderBottomMenu}
                     formatHeader={this.props.formatHeader}
                     headerStyle={this.props.headerStyle}
                     renderEvent={this.props.renderEvent}
@@ -160,6 +265,7 @@ export default class EventCalendar extends React.Component {
                     start={start}
                     end={end}
                 />
+
             </View>
         );
     }
@@ -244,6 +350,15 @@ export default class EventCalendar extends React.Component {
                     }}
                     {...virtualizedListProps}
                 />
+                {this.props.renderBottomMenu && <View style={{
+                    bottom: this.props.bottomMenuBottom ? this.props.bottomMenuBottom : 120,
+                    height: this.props.bottomMenuHeight ? this.props.bottomMenuHeight : 200,
+                    width: this.props.width,
+                    backgroundColor: "transparent",
+                    alignContent: "center",
+                    alignItems: "center",
+                    padding: 10,
+                }}>{this.props.renderBottomMenu}</View>}
             </View>
         );
     }

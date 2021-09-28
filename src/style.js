@@ -14,6 +14,7 @@ export default function styleConstructor(theme = {}, calendarHeight) {
     contentStyle: {
       backgroundColor: '#ffff',
       height: calendarHeight + 10,
+                         flexGrow: 1,
       ...theme.contentStyle,
     },
     header: {
