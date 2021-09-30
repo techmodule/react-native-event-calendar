@@ -423,7 +423,7 @@ export const EventCalendarAllDay = (props) => {
         if (sizeTopEvents > allDayEvents.length) {
             topHeight = heightTopEvents * allDayEvents.length;
         }
-        const _date = moment(selectedDate);
+        const _date = moment(item.date);
         let headerText = upperCaseHeader
         ? _date.format(formatHeader || 'DD MMMM YYYY').toUpperCase()
         : _date.format(formatHeader || 'DD MMMM YYYY');
