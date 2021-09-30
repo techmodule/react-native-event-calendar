@@ -1,38 +1,34 @@
-import moment from "moment";
-import {FlatList, VirtualizedList} from "react-native";
-import React from "react";
-<FlatList
-                data={devidedEvents}
-                renderItem={({item, index}) => _renderItem({item, index})}
-                keyExtractor={(item, index) => index.toString()}
-                //extraData={selectedId}
-            />
-<VirtualizedList
-                //ref={calendar}
-                ref={calendarRef}
-                windowSize={2}
-                initialNumToRender={2}
-                initialScrollIndex={size}
-                data={events}
-                getItemCount={() => size * 2}
-                getItem={(item, index) => _getItem(item, index)}
-                keyExtractor={(item, index) => index.toString()}
-                getItemLayout={(item, index) => _getItemLayout(item, index)}
-                renderItem={({item, index}) => _renderItem({item, index})}
-                horizontal
-                pagingEnabled
-                style={{width: width}}
-                onMomentumScrollEnd={event => {
-                    const index = parseInt(event.nativeEvent.contentOffset.x / width);
-                    const date = moment(initDate).add(
-                        index - size,
-                        'days'
-                    );
-                    if (props.dateChanged) {
-                        props.dateChanged(date.format('YYYY-MM-DD'));
-                    }
-                    setCurrentIndex(index);
-                    setSelectedDate(date);
-                }}
-                {...virtualizedListProps}
-            />
+const styles = StyleSheet.create({
+    container: {
+        flexDirection: 'row',
+        padding: 5,
+    },
+    leftColumn: {
+        width: 100,
+        marginRight: 10,
+        alignItems: 'flex-end',
+    },
+    rightColumn: {
+        flex: 1,
+    },
+    topRow: {
+        alignItems: 'center',
+        marginBottom: 10,
+    },
+    headersFlex2: {
+        flex: 2,
+        justifyContent: "center",
+        alignContent: "center",
+        alignItems: "center",
+    },
+    headersFlex2Left: {
+        flex: 2,
+        alignItems: "flex-start",
+        alignContent: "flex-start",
+    },
+    headersFlex2Right: {
+        flex: 2,
+        alignItems: "flex-end",
+        alignContent: "flex-end",
+    },
+});

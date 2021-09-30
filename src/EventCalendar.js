@@ -1,5 +1,14 @@
 // @flow
-import {Dimensions, FlatList, Image, Text, TouchableOpacity, View, VirtualizedList} from 'react-native';
+import {
+    ActivityIndicator,
+    Dimensions,
+    FlatList,
+    Image,
+    Text,
+    TouchableOpacity,
+    View,
+    VirtualizedList
+} from 'react-native';
 import _ from 'lodash';
 import moment from 'moment';
 import React from 'react';
@@ -414,10 +423,35 @@ export const EventCalendarAllDay = (props) => {
         if (sizeTopEvents > allDayEvents.length) {
             topHeight = heightTopEvents * allDayEvents.length;
         }
+        const _date = moment(selectedDate);
+        let headerText = upperCaseHeader
+        ? _date.format(formatHeader || 'DD MMMM YYYY').toUpperCase()
+        : _date.format(formatHeader || 'DD MMMM YYYY');
 
 
         return (
             <View style={[styles.container, {width}]}>
+                {isShowHeader &&
+            <View style={styles.headerFlexRow}>
+                <View style={styles.headersFlex2Left}>{props.leftTopView}</View>
+                <TouchableOpacity
+                    style={styles.headersFlex1}
+                    onPress={() => _previous()}
+                >
+                    {leftIcon}
+                </TouchableOpacity>
+                <View style={styles.headersFlex6}
+                >
+                    {isLoading==true?(<ActivityIndicator size="small" color="grey"/>):(<Text style={styles.headerText}>{headerText}</Text>)}
+                </View>
+                <TouchableOpacity
+                    style={styles.headersFlex1}
+                    onPress={() => _next()}
+                >
+                    {rightIcon}
+                </TouchableOpacity>
+                <View style={styles.headersFlex2Right}>{props.rightTopView}</View>
+            </View>}
                 {allDayEvents.length > 0 &&
                 <View style={{
                     height: showMoreTopEvents ? fullTopHeight : topHeight,
@@ -498,34 +532,10 @@ export const EventCalendarAllDay = (props) => {
         setIsLoading(false);
 
     };
-    const _date = moment(selectedDate);
-    let headerText = upperCaseHeader
-        ? _date.format(formatHeader || 'DD MMMM YYYY').toUpperCase()
-        : _date.format(formatHeader || 'DD MMMM YYYY');
+
 
     return (
         <View style={[styles.container, {width}]}>
-            {isShowHeader &&
-            <View style={styles.headerFlexRow}>
-                <View style={styles.headersFlex2Left}>{props.leftTopView}</View>
-                <TouchableOpacity
-                    style={styles.headersFlex1}
-                    onPress={() => _previous()}
-                >
-                    {leftIcon}
-                </TouchableOpacity>
-                <View style={styles.headersFlex6}
-                >
-                    <Text style={styles.headerText}>{headerText}</Text>
-                </View>
-                <TouchableOpacity
-                    style={styles.headersFlex1}
-                    onPress={() => _next()}
-                >
-                    {rightIcon}
-                </TouchableOpacity>
-                <View style={styles.headersFlex2Right}>{props.rightTopView}</View>
-            </View>}
             <FlatList
                 initialNumToRender={2}
                 pagingEnabled
@@ -539,16 +549,19 @@ export const EventCalendarAllDay = (props) => {
                 //renderItem={({item, index}) => <View style={{width:DEVICE_WIDTH}}><Text>{JSON.stringify(item)}</Text></View>}
                 keyExtractor={(item, index) => index.toString()}
                 onMomentumScrollEnd={event => {
-                    const index = parseInt(event.nativeEvent.contentOffset.x / width);
+                    console.log("onMomentumScrollEnd");
+                    let _index = parseInt(event.nativeEvent.contentOffset.x / width);
+                    setIsLoading(true);
                     const date = moment(initDate).add(
-                        index - size,
+                        _index - size,
                         'days'
                     );
+                    setCurrentIndex(_index);
+                    setSelectedDate(date);
                     if (props.dateChanged) {
                         props.dateChanged(date.format('YYYY-MM-DD'));
                     }
-                    setCurrentIndex(index);
-                    setSelectedDate(date);
+                    setIsLoading(false);
                 }}
                 //extraData={selectedId}
             />
