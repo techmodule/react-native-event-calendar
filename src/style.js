@@ -14,7 +14,6 @@ export default function styleConstructor(theme = {}, calendarHeight) {
     contentStyle: {
       backgroundColor: '#ffff',
       height: calendarHeight + 10,
-                         flexGrow: 1,
       ...theme.contentStyle,
     },
     header: {
@@ -63,21 +62,6 @@ export default function styleConstructor(theme = {}, calendarHeight) {
       alignItems: 'flex-start',
       overflow: 'hidden',
       ...theme.event,
-    },
-    allDayEvent: {
-      backgroundColor: '#F0F4FF',
-      opacity: 0.8,
-      borderColor: '#DDE5FD',
-      borderWidth: 1,
-      borderRadius: 5,
-      paddingLeft: 4,
-      minHeight: 25,
-      paddingTop: 5,
-      paddingBottom: 0,
-      flexDirection: 'column',
-      alignItems: 'flex-start',
-      overflow: 'hidden',
-      ...theme.allDayEvent,
     },
     eventTitle: {
       color: '#615B73',

@@ -1,5 +1,5 @@
 // @flow
-import {ActivityIndicator, Image, ScrollView, Text, TouchableOpacity, View} from 'react-native';
+import {ActivityIndicator, ScrollView, Text, TouchableOpacity, View} from 'react-native';
 import populateEvents from './Packer';
 import React from 'react';
 import moment from 'moment';
@@ -17,6 +17,177 @@ function range(from, to) {
     return Array.from(Array(to), (_, i) => from + i);
 }
 
+export const NewDayView = (props) => {
+    const {styles} = props;
+    const _scrollView = React.useRef(null);
+    const calendarHeight = (props.end - props.start) * 100;
+    const width = props.width - LEFT_MARGIN;
+    const packedEvents = populateEvents(props.events, width, props.start);
+    let initPosition =
+        _.min(_.map(packedEvents, 'top')) -
+        calendarHeight / (props.end - props.start);
+    initPosition = initPosition < 0 ? 0 : initPosition;
+    const [_scrollY, set_scrollY] = React.useState(initPosition);
+    const scrollToFirst = () => {
+        setTimeout(() => {
+            if (_scrollY && _scrollView) {
+                _scrollView.current?.scrollTo({
+                    x: 0,
+                    y: _scrollY,
+                    animated: true,
+                });
+            }
+        }, 1);
+    }
+    const _renderRedLine = () => {
+        const offset = 100;
+        const {format24h} = props;
+        const {width, styles} = props;
+        const timeNowHour = moment().hour();
+        const timeNowMin = moment().minutes();
+        return (
+            <View
+                key={`timeNow`}
+                style={[
+                    styles.lineNow,
+                    {
+                        top:
+                            offset * (timeNowHour - props.start) +
+                            (offset * timeNowMin) / 60,
+                        width: width - 20,
+                    },
+                ]}
+            />
+        );
+    }
+    const _renderLines = () => {
+        const {format24h, start, end} = props;
+        const offset = calendarHeight / (end - start);
+        return range(start, end + 1).map((i, index) => {
+            let timeText;
+            if (i === start) {
+                timeText = ``;
+            } else if (i < 12) {
+                timeText = !format24h ? `${i} AM` : i;
+            } else if (i === 12) {
+                timeText = !format24h ? `${i} PM` : i;
+            } else if (i === 24) {
+                timeText = !format24h ? `12 AM` : 0;
+            } else {
+                timeText = !format24h ? `${i - 12} PM` : i;
+            }
+            const {width, styles} = props;
+            return [
+                <Text
+                    key={`timeLabel${i}`}
+                    style={[styles.timeLabel, {top: offset * index - 6}]}
+                >
+                    {timeText}
+                </Text>,
+                i === start ? null : (
+                    <View
+                        key={`line${i}`}
+                        style={[styles.line, {top: offset * index, width: width - 20}]}
+                    />
+                ),
+                <View
+                    key={`lineHalf${i}`}
+                    style={[
+                        styles.line,
+                        {top: offset * (index + 0.5), width: width - 20},
+                    ]}
+                />,
+            ];
+        });
+    }
+    const _onEventTapped = (event) => {
+        props.eventTapped(event);
+    }
+
+    const _renderEvents = () => {
+        let events = packedEvents.map((event, i) => {
+            const style = {
+                left: event.left,
+                height: event.height,
+                width: event.width,
+                top: event.top,
+            };
+
+            const eventColor = {
+                backgroundColor: event.color,
+            };
+
+            // Fixing the number of lines for the event title makes this calculation easier.
+            // However it would make sense to overflow the title to a new line if needed
+            const numberOfLines = Math.floor(event.height / TEXT_LINE_HEIGHT);
+            const formatTime = props.format24h ? 'HH:mm' : 'hh:mm A';
+            return (
+                <TouchableOpacity
+                    activeOpacity={0.5}
+                    onPress={() =>
+                        _onEventTapped(props.events[event.index])
+                    }
+                    key={i} style={[styles.event, style, event.color && eventColor]}
+                >
+                    {props.renderEvent ? (
+                        props.renderEvent(event)
+                    ) : (
+                        <View>
+                            <Text numberOfLines={1} style={styles.eventTitle}>
+                                {event.title || 'Event'}
+                            </Text>
+                            {numberOfLines > 1 ? (
+                                <Text
+                                    numberOfLines={numberOfLines - 1}
+                                    style={[styles.eventSummary]}
+                                >
+                                    {event.summary || ' '}
+                                </Text>
+                            ) : null}
+                            {numberOfLines > 2 ? (
+                                <Text style={styles.eventTimes} numberOfLines={1}>
+                                    {moment(event.start).format(formatTime)} -{' '}
+                                    {moment(event.end).format(formatTime)}
+                                </Text>
+                            ) : null}
+                        </View>
+                    )}
+                </TouchableOpacity>
+            );
+        });
+        return (
+            <View style={{flex: 1}}>
+                <View style={{marginLeft: LEFT_MARGIN}}>{events}</View>
+            </View>
+        );
+    }
+    React.useEffect(() => {
+        if (props.scrollToFirst) {
+            scrollToFirst();
+        }
+    }, [_scrollY]);
+
+    return (
+        <View style={{flex: 1}}>
+            <ScrollView
+                onScrollBeginDrag={props.onScrollBeginDrag}
+                contentInsetAdjustmentBehavior="never"
+                ref={ref => set_scrollY(ref)}
+                contentContainerStyle={[
+                    styles.contentStyle,
+                    {
+                        width: props.width,
+                    },
+                ]}
+            >{props.isLoading && <ActivityIndicator size="small" color="grey"/>}
+                {_renderLines()}
+                {_renderEvents()}
+                {_renderRedLine()}
+            </ScrollView>
+        </View>
+    );
+}
+
 export default class DayView extends React.PureComponent {
     constructor(props) {
         super(props);
@@ -30,9 +201,9 @@ export default class DayView extends React.PureComponent {
         this.state = {
             _scrollY: initPosition,
             packedEvents,
-
         };
     }
+
     componentWillReceiveProps(nextProps) {
         const width = nextProps.width - LEFT_MARGIN;
         this.setState({
@@ -81,6 +252,7 @@ export default class DayView extends React.PureComponent {
     _renderLines() {
         const {format24h, start, end} = this.props;
         const offset = this.calendarHeight / (end - start);
+
         return range(start, end + 1).map((i, index) => {
             let timeText;
             if (i === start) {
@@ -188,7 +360,7 @@ export default class DayView extends React.PureComponent {
         });
 
         return (
-            <View style={{flex: 1}}>
+            <View>
                 <View style={{marginLeft: LEFT_MARGIN}}>{events}</View>
             </View>
         );
@@ -197,22 +369,17 @@ export default class DayView extends React.PureComponent {
     render() {
         const {styles} = this.props;
         return (
-            <View style={{flex: 1}}>
-                <ScrollView
-                    contentInsetAdjustmentBehavior="never"
-                    ref={ref => (this._scrollView = ref)}
-                    contentContainerStyle={[
-                        styles.contentStyle,
-                        {width: this.props.width,
-                        },
-                    ]}
-                >{this.props.isLoading && <ActivityIndicator size="small" color="grey"/>}
-                    {this._renderLines()}
-                    {this._renderEvents()}
-                    {this._renderRedLine()}
-                </ScrollView>
-            </View>
+            <ScrollView
+                ref={ref => (this._scrollView = ref)}
+                contentContainerStyle={[
+                    styles.contentStyle,
+                    {width: this.props.width},
+                ]}
+            >
+                {this._renderLines()}
+                {this._renderEvents()}
+                {this._renderRedLine()}
+            </ScrollView>
         );
     }
-
 }
