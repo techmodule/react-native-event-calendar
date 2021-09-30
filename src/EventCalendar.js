@@ -225,17 +225,18 @@ export const EventCalendarAllDay = (props) => {
     const scrollToFirst = props.scrollToFirst ? props.scrollToFirst : true;
     const width = props.width ? props.width : DEVICE_WIDTH;
     const events = props.events ? props.events : [];
-    const [devidedEvents, setdevidedEvents] = React.useState([]);
     const virtualizedListProps = props.virtualizedListProps ? props.virtualizedListProps : undefined;
     const styles = styleConstructor(props.styles, (end - start) * 100);
     const [selectedDate, setSelectedDate] = React.useState(moment(initDate));
     const [currentIndex, setCurrentIndex] = React.useState(size);
     const [isLoading, setIsLoading] = React.useState(props.isLoading ? props.isLoading : false);
     const [showMoreTopEvents, setShowMoreTopEvents] = React.useState(false);
-    const [isShowHeader, setShowHeader] = React.useState(props.isShowHeader ? props.isShowHeader : true);
-    const [heightTopEvents, setHeightTopEvents] = React.useState(props.heightTopEvents ? props.heightTopEvents : 26);
-    const [sizeTopEvents, setSizeTopEvents] = React.useState(sizeTopEvents ? sizeTopEvents : 2);
-
+    let isShowHeader = true;
+    if (props.isShowHeader !== null && typeof props.isShowHeader !== "undefined" && props.isShowHeader === false) {
+        isShowHeader = false;
+    }
+    const heightTopEvents = props.heightTopEvents ? props.heightTopEvents : 26;
+    const sizeTopEvents = sizeTopEvents ? sizeTopEvents : 2;
     const rightIcon = props.headerIconRight ? (
         props.headerIconRight
     ) : (
@@ -262,7 +263,7 @@ export const EventCalendarAllDay = (props) => {
         return {length: width, offset: width * index, index};
     };
     const _onEventTapped = (event) => {
-        props.eventTapped(event)
+        props.eventTapped(event);
     };
     const showMoreIcon = props.showMoreIcon ? (
         props.showMoreIcon
@@ -385,6 +386,26 @@ export const EventCalendarAllDay = (props) => {
             </View>
         );
     };
+    const _rightTopFunc = () => {
+        //Alert.alert("_rightTopFunc", "_rightTopFunc");
+        console.log("_rightTopFunc in child");
+        try {
+            props.rightTopFunc;
+        } catch (e) {
+            console.log("_rightTopFunc in child", e);
+        }
+
+    }
+    const _leftTopFunc = () => {
+        console.log("_leftTopFunc in child");
+        try {
+            props.leftTopFunc;
+        } catch (e) {
+            console.log("leftTopFunc in child", e);
+        }
+
+
+    }
     const _renderDayItem = ({item, index}) => {
         let inDayEvents = item.inDayEvents;
         let allDayEvents = item.allDayEvents;
@@ -393,42 +414,10 @@ export const EventCalendarAllDay = (props) => {
         if (sizeTopEvents > allDayEvents.length) {
             topHeight = heightTopEvents * allDayEvents.length;
         }
-        const _date = moment(item.date);
-        let headerText = upperCaseHeader
-            ? _date.format(formatHeader || 'DD MMMM YYYY').toUpperCase()
-            : _date.format(formatHeader || 'DD MMMM YYYY');
+
 
         return (
             <View style={[styles.container, {width}]}>
-                {isShowHeader ? (<View style={styles.header}>
-                    <TouchableOpacity
-                        style={styles.arrowButton}
-                        onPress={() => props.lefTopFunc}
-                    >
-                        {leftIconAddNew}
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                        style={styles.arrowButton}
-                        onPress={() => _previous()}
-                    >
-                        {leftIcon}
-                    </TouchableOpacity>
-                    <View style={styles.headerTextContainer}>
-                        <Text style={styles.headerText}>{headerText}</Text>
-                    </View>
-                    <TouchableOpacity
-                        style={styles.arrowButton}
-                        onPress={() => _next()}
-                    >
-                        {rightIcon}
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                        style={styles.arrowButton}
-                        onPress={() => props.rightTopFunc}
-                    >
-                        {rightIconSetting}
-                    </TouchableOpacity>
-                </View>) : (<View></View>)}
                 {allDayEvents.length > 0 &&
                 <View style={{
                     height: showMoreTopEvents ? fullTopHeight : topHeight,
@@ -509,9 +498,34 @@ export const EventCalendarAllDay = (props) => {
         setIsLoading(false);
 
     };
+    const _date = moment(selectedDate);
+    let headerText = upperCaseHeader
+        ? _date.format(formatHeader || 'DD MMMM YYYY').toUpperCase()
+        : _date.format(formatHeader || 'DD MMMM YYYY');
 
     return (
         <View style={[styles.container, {width}]}>
+            {isShowHeader &&
+            <View style={styles.headerFlexRow}>
+                <View style={styles.headersFlex2Left}>{props.leftTopView}</View>
+                <TouchableOpacity
+                    style={styles.headersFlex1}
+                    onPress={() => _previous()}
+                >
+                    {leftIcon}
+                </TouchableOpacity>
+                <View style={styles.headersFlex6}
+                >
+                    <Text style={styles.headerText}>{headerText}</Text>
+                </View>
+                <TouchableOpacity
+                    style={styles.headersFlex1}
+                    onPress={() => _next()}
+                >
+                    {rightIcon}
+                </TouchableOpacity>
+                <View style={styles.headersFlex2Right}>{props.rightTopView}</View>
+            </View>}
             <FlatList
                 initialNumToRender={2}
                 pagingEnabled
@@ -566,18 +580,28 @@ export const EventCalendarSingle = (props) => {
     const events = props.events ? props.events : [];
     const virtualizedListProps = props.virtualizedListProps ? props.virtualizedListProps : undefined;
     const styles = styleConstructor(props.styles, (end - start) * 100);
+
     const [date, setDate] = React.useState(props.date ? props.date : moment().format("YYYY-MM-DD"));
-    const [currentIndex, setCurrentIndex] = React.useState(size * 2);
+
     const [isLoading, setIsLoading] = React.useState(props.isLoading ? props.isLoading : false);
     const [showMoreTopEvents, setShowMoreTopEvents] = React.useState(false);
-    const [isShowHeader, setShowHeader] = React.useState(props.isShowHeader ? props.isShowHeader : true);
-    const [heightTopEvents, setHeightTopEvents] = React.useState(props.heightTopEvents ? props.heightTopEvents : 26);
-    const [sizeTopEvents, setSizeTopEvents] = React.useState(sizeTopEvents ? sizeTopEvents : 2);
+    //const isShowHeader = props.isShowHeader ? props.isShowHeader : true;
+    let isShowHeader = true;
+    if (props.isShowHeader !== null && typeof props.isShowHeader !== "undefined" && props.isShowHeader === false) {
+        isShowHeader = false;
+    }
+    const heightTopEvents = props.heightTopEvents ? props.heightTopEvents : 26;
+    const sizeTopEvents = sizeTopEvents ? sizeTopEvents : 2;
 
     const rightIcon = props.headerIconRight ? (
         props.headerIconRight
     ) : (
         <Image source={require('./forward.png')} style={styles.arrow}/>
+    );
+    const rightIconSetting = props.headerIconRightSetting ? (
+        props.headerIconRightSetting
+    ) : (
+        <Image source={require('./settings.png')} style={styles.arrow}/>
     );
 
     const leftIcon = props.headerIconLeft ? (
@@ -585,12 +609,17 @@ export const EventCalendarSingle = (props) => {
     ) : (
         <Image source={require('./back.png')} style={styles.arrow}/>
     );
-    const _GetEventsByTypeLayout = (data, index) => {
+    const leftIconAddNew = props.leftIconAddNew ? (
+        props.leftIconAddNew
+    ) : (
+        <Image source={require('./plus.png')} style={styles.arrow}/>
+    );
+    const _getItemLayout = (data, index) => {
         const {width} = props;
         return {length: width, offset: width * index, index};
     };
     const _onEventTapped = (event) => {
-        props.eventTapped(event)
+        props.eventTapped(event);
     };
     const showMoreIcon = props.showMoreIcon ? (
         props.showMoreIcon
@@ -602,6 +631,7 @@ export const EventCalendarSingle = (props) => {
     ) : (
         <Image source={require('./showless.png')} style={styles.arrow}/>
     );
+
     const _GetEventsByType = (events, date) => {
         if (props.isShowTopEvent) {
             let zeroOfDay = moment(date).startOf('day');
@@ -671,12 +701,13 @@ export const EventCalendarSingle = (props) => {
                     onPress={() =>
                         _onEventTapped(event)
                     }
-                    key={i} style={[styles.allDayEvent, style, event.color && eventColor]}
+                    key={i}
+                    style={[styles.allDayEvent, style, event.color && eventColor, {marginTop: 2, marginLeft: 2}]}
                 >
                     {props.renderAllDayEvent ? (
                         props.renderAllDayEvent(event)
                     ) : (
-                        <View>
+                        <View style={{margin: 2,}}>
                             <Text numberOfLines={1} style={styles.eventTitle}>
                                 {event.title}
                             </Text>
@@ -692,6 +723,7 @@ export const EventCalendarSingle = (props) => {
                         alignContent: "center",
                         alignItems: "center",
                         flexDirection: "row",
+                        marginTop: 2,
                     }}>
                         <View>
                             {eventsView}
@@ -719,9 +751,10 @@ export const EventCalendarSingle = (props) => {
                 }}>{eventsView}</View>)}
             </View>
         );
-    }
+    };
     const _renderEventByDate = (eventListByDate, date) => {
-        let item = eventListByDate;
+        let inDayEvents = eventListByDate[0];
+        let allDayEvents = eventListByDate[1];
         let topHeight = heightTopEvents * sizeTopEvents + 10;
         let fullTopHeight = heightTopEvents * allDayEvents.length + 10;
         if (sizeTopEvents > allDayEvents.length) {
@@ -733,30 +766,34 @@ export const EventCalendarSingle = (props) => {
 
         return (
             <View style={[styles.container, {width}]}>
-                {isShowHeader ? (<View style={styles.header}>
+                {isShowHeader &&
+                <View style={styles.headerFlexRow}>
+                    <View style={styles.headersFlex2Left}>{props.leftTopView}</View>
                     <TouchableOpacity
-                        style={styles.arrowButton}
+                        style={styles.headersFlex1}
                         onPress={() => _previous()}
                     >
                         {leftIcon}
                     </TouchableOpacity>
-                    <View style={styles.headerTextContainer}>
+                    <View style={styles.headersFlex6}
+                    >
                         <Text style={styles.headerText}>{headerText}</Text>
                     </View>
                     <TouchableOpacity
-                        style={styles.arrowButton}
+                        style={styles.headersFlex1}
                         onPress={() => _next()}
                     >
                         {rightIcon}
                     </TouchableOpacity>
-                </View>) : (<View></View>)}
-                {item[1].length > 0 &&
+                    <View style={styles.headersFlex2Right}>{props.rightTopView}</View>
+                </View>}
+                {allDayEvents.length > 0 &&
                 <View style={{
                     height: showMoreTopEvents ? fullTopHeight : topHeight,
                     //height:300,
                     marginTop: 2,
                 }}>
-                    {_renderAllDayEvents(item[1])}
+                    {_renderAllDayEvents(allDayEvents)}
                 </View>}
 
                 <NewDayView
@@ -768,8 +805,8 @@ export const EventCalendarSingle = (props) => {
                     headerStyle={props.headerStyle}
                     renderEvent={props.renderEvent}
                     eventTapped={props.eventTapped}
-                    allDayEvents={item[1]}
-                    events={item[0]}
+                    allDayEvents={allDayEvents}
+                    events={inDayEvents}
                     width={width}
                     styles={styles}
                     scrollToFirst={scrollToFirst}
@@ -779,7 +816,6 @@ export const EventCalendarSingle = (props) => {
             </View>
         );
     };
-
 
     const _previous = () => {
         setDate(moment(date)
